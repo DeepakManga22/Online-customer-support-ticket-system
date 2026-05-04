@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+<nav class="navbar" style="border-bottom: none; background: transparent;">
+    <div class="navbar-brand">
+        <a href="/" class="brand-3d" data-text="ResolveX">ResolveX</a>
+    </div>
+    <div class="nav-links" style="display: flex; align-items: center;">
+        <button id="theme-toggle-index" class="btn" style="padding: 0.5rem; background: transparent; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-main); margin-right: 0.5rem;" aria-label="Toggle Theme" title="Toggle Theme">
+            <span id="theme-icon-index">🌙</span>
+        </button>
+        <button class="btn btn-outline" onclick="openModal('loginModal')">Log In</button>
+        <button class="btn btn-primary" onclick="openModal('signupModal')">Sign Up</button>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<style>
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 450px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    position: relative;
+    margin: 1rem;
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--danger);
+}
+
+/* Landing Page */
+.hero-section {
+    text-align: center;
+    padding: 5rem 1rem 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--text-main) 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 2rem 0 5rem;
+}
+
+.feature-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--primary);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+}
+
+.feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-main);
+}
+
+.feature-desc {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+</style>
+
+<div class="hero-section">
+    <h1 class="hero-title">Support Made Simple, Fast & Beautiful</h1>
+    <p class="hero-subtitle">ResolveX is a next-generation ticketing system designed to help your team resolve issues quickly while providing customers with a premium experience.</p>
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button class="btn btn-primary" style="font-size: 1.1rem; padding: 0.75rem 2rem;" onclick="openModal('signupModal')">Get Started Now</button>
+        <button class="btn btn-outline" style="font-size: 1.1rem; padding: 0.75rem 2rem;" onclick="openModal('loginModal')">Log In</button>
+    </div>
+</div>
+
+<div class="features-grid">
+    <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <h3 class="feature-title">Lightning Fast</h3>
+        <p class="feature-desc">Built using modern architecture to ensure that tickets are loaded, updated, and dispatched in milliseconds.</p>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">🌙</div>
+        <h3 class="feature-title">Premium Dark Interface</h3>
+        <p class="feature-desc">Reduce eye strain and enhance focus with our carefully crafted dark mode aesthetics available for all users.</p>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3 class="feature-title">Interactive Threads</h3>
+        <p class="feature-desc">Communicate seamlessly with context. Our chat-like interface makes resolving issues feel like a breeze.</p>
+    </div>
+</div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event, 'loginModal')">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
+        <h2 style="margin-bottom: 1.5rem; text-align: center;">Welcome Back</h2>
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="form-group">
+                <label for="login-email">Email Address</label>
+                <input type="email" id="login-email" name="email" required placeholder="name@example.com">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" name="password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Log In</button>
+        </form>
+    </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signupModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event, 'signupModal')">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('signupModal')">&times;</button>
+        <h2 style="margin-bottom: 1.5rem; text-align: center; color: var(--primary);">Create Account</h2>
+        <form action="{{ url_for('register') }}" method="POST">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="name@example.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label for="role">Account Type (Demo)</label>
+                <select name="role" id="role">
+                    <option value="user">Customer</option>
+                    <option value="admin">Support Agent</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Register</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal(id) {
+    const modal = document.getElementById(id);
+    modal.style.display = 'flex';
+    // Small timeout to allow display:flex to apply before adding class for opacity transition
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.remove('active');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
+function closeModalOnOutsideClick(e, id) {
+    if (e.target.id === id) {
+        closeModal(id);
+    }
+}
+</script>
+{% endblock %}

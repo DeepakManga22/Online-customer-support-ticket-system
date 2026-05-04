@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ticket-header" style="flex-wrap: wrap; gap: 1rem;">
+    <h2>Admin Dashboard</h2>
+    <form action="{{ url_for('admin_dashboard') }}" method="GET" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <input type="text" name="search" placeholder="Search by ID or Title..." style="width: 250px; margin: 0;" value="{{ request.args.get('search', '') }}">
+        <select name="status" style="width: auto; margin: 0;">
+            <option value="">All Statuses</option>
+            <option value="Open" {% if request.args.get('status') == 'Open' %}selected{% endif %}>Open</option>
+            <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>In Progress</option>
+            <option value="Resolved" {% if request.args.get('status') == 'Resolved' %}selected{% endif %}>Resolved</option>
+            <option value="Closed" {% if request.args.get('status') == 'Closed' %}selected{% endif %}>Closed</option>
+        </select>
+        <button type="submit" class="btn btn-outline">Filter</button>
+        {% if request.args.get('search') or request.args.get('status') %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-danger">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total Tickets</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--danger)">{{ stats.open }}</div>
+        <div class="stat-label">Open</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--warning)">{{ stats.in_progress }}</div>
+        <div class="stat-label">In Progress</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--accent)">{{ stats.resolved }}</div>
+        <div class="stat-label">Resolved</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 class="mb-2">Ticket Status Distribution</h3>
+    <div style="height: 300px; width: 100%; display: flex; justify-content: center;">
+        <canvas id="statusChart"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="mb-2">Manage Tickets</h3>
+    {% if tickets %}
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>#{{ ticket.id }}</td>
+                    <td>{{ ticket.author.name }}</td>
+                    <td><strong>{{ ticket.title }}</strong></td>
+                    <td>{{ ticket.category }}</td>
+                    <td>{{ ticket.priority }}</td>
+                    <td>
+                        <span class="badge badge-{{ ticket.status|lower|replace(' ', '-') }}">{{ ticket.status }}</span>
+                    </td>
+                    <td>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-outline btn-sm">Manage</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center" style="padding: 2rem;">No tickets found.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    
+    // Set chart styling defaults for dark mode
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = '#334155';
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Open', 'In Progress', 'Resolved', 'Closed'],
+            datasets: [{
+                data: [{{ stats.open }}, {{ stats.in_progress }}, {{ stats.resolved }}, {{ stats.total - stats.open - stats.in_progress - stats.resolved }}],
+                backgroundColor: [
+                    '#ef4444', // Danger/Red
+                    '#f59e0b', // Warning/Yellow
+                    '#10b981', // Accent/Green
+                    '#94a3b8'  // Muted/Gray
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

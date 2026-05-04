@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <!-- Main Content -->
+    <div style="flex: 3; min-width: 300px;">
+        <div class="card">
+            <div class="ticket-header" style="flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="margin-bottom: 0.5rem">{{ ticket.title }}</h2>
+                    <span class="text-muted">Ticket #{{ ticket.id }} • Created by {{ ticket.author.name }} on {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div>
+                    <span class="badge badge-{{ ticket.status|lower|replace(' ', '-') }}">{{ ticket.status }}</span>
+                </div>
+            </div>
+            
+            <div style="padding: 1rem 0;">
+                <p style="white-space: pre-wrap;">{{ ticket.description }}</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Conversation</h3>
+            <div class="messages-container">
+                {% for msg in messages %}
+                <div class="message {{ 'admin' if msg.sender.role == 'admin' else 'user' }}">
+                    <div class="message-meta">
+                        <strong>{{ msg.sender.name }} {% if msg.sender.role == 'admin' %}(Support){% endif %}</strong>
+                        <span>{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <div class="message-content" style="white-space: pre-wrap;">{{ msg.message }}</div>
+                </div>
+                {% else %}
+                <p class="text-muted text-center" style="padding: 1rem;">No replies yet.</p>
+                {% endfor %}
+            </div>
+
+            {% if ticket.status != 'Closed' %}
+            <form action="{{ url_for('reply_ticket', ticket_id=ticket.id) }}" method="POST" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                <div class="form-group">
+                    <label for="message">Reply to Ticket</label>
+                    <textarea id="message" name="message" rows="4" required placeholder="Type your message here..."></textarea>
+                </div>
+                <div style="text-align: right;">
+                    <button type="submit" class="btn btn-primary">Send Reply</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="alert alert-success" style="margin-top: 1.5rem; text-align: center;">
+                This ticket has been closed. If you need further assistance, please open a new ticket.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div style="flex: 1; min-width: 250px;">
+        <div class="card" style="position: sticky; top: 80px;">
+            <h3 style="margin-bottom: 1rem;">Ticket Details</h3>
+            
+            <div class="mb-2">
+                <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Category</div>
+                <div>{{ ticket.category }}</div>
+            </div>
+            
+            <div class="mb-2">
+                <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Priority</div>
+                <div>
+                    <span class="badge" style="background: var(--bg-color); border: 1px solid var(--border); color: var(--text-main);">{{ ticket.priority }}</span>
+                </div>
+            </div>
+
+            {% if session.get('role') == 'admin' %}
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+            <h3 style="margin-bottom: 1rem;">Admin Actions</h3>
+            <form action="{{ url_for('update_ticket_status', ticket_id=ticket.id) }}" method="POST">
+                <div class="form-group">
+                    <label for="status">Update Status</label>
+                    <select id="status" name="status" style="margin-bottom: 0.5rem;">
+                        <option value="Open" {% if ticket.status == 'Open' %}selected{% endif %}>Open</option>
+                        <option value="In Progress" {% if ticket.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                        <option value="Resolved" {% if ticket.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                        <option value="Closed" {% if ticket.status == 'Closed' %}selected{% endif %}>Closed</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-outline" style="width: 100%;">Update Status</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
